@@ -19,6 +19,49 @@ public sealed class TahabilDbContext : DbContext
     public DbSet<BusinessSettings> BusinessSettings => Set<BusinessSettings>();
     public DbSet<ApplicationSetting> ApplicationSettings => Set<ApplicationSetting>();
 
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
+    public DbSet<CustomerLedgerEntry> CustomerLedgerEntries => Set<CustomerLedgerEntry>();
+    public DbSet<SupplierLedgerEntry> SupplierLedgerEntries => Set<SupplierLedgerEntry>();
+    public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
+
+    public DbSet<Sale> Sales => Set<Sale>();
+    public DbSet<SaleItem> SaleItems => Set<SaleItem>();
+    public DbSet<SalePayment> SalePayments => Set<SalePayment>();
+    public DbSet<SaleReturn> SaleReturns => Set<SaleReturn>();
+    public DbSet<SaleReturnItem> SaleReturnItems => Set<SaleReturnItem>();
+
+    public DbSet<Purchase> Purchases => Set<Purchase>();
+    public DbSet<PurchaseItem> PurchaseItems => Set<PurchaseItem>();
+    public DbSet<PurchasePayment> PurchasePayments => Set<PurchasePayment>();
+    public DbSet<PurchaseReturn> PurchaseReturns => Set<PurchaseReturn>();
+    public DbSet<PurchaseReturnItem> PurchaseReturnItems => Set<PurchaseReturnItem>();
+
+    public DbSet<StockBalance> StockBalances => Set<StockBalance>();
+    public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+    public DbSet<StockAdjustment> StockAdjustments => Set<StockAdjustment>();
+    public DbSet<StockAdjustmentItem> StockAdjustmentItems => Set<StockAdjustmentItem>();
+
+    public DbSet<Account> Accounts => Set<Account>();
+    public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
+    public DbSet<JournalEntryLine> JournalEntryLines => Set<JournalEntryLine>();
+    public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
+    public DbSet<Expense> Expenses => Set<Expense>();
+
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<LoginAttempt> LoginAttempts => Set<LoginAttempt>();
+    public DbSet<DocumentSequence> DocumentSequences => Set<DocumentSequence>();
+    public DbSet<BackupHistory> BackupHistory => Set<BackupHistory>();
+
+    public DbSet<LicenseRecord> LicenseRecords => Set<LicenseRecord>();
+    public DbSet<ActivationRecord> ActivationRecords => Set<ActivationRecord>();
+    public DbSet<MachineBinding> MachineBindings => Set<MachineBinding>();
+    public DbSet<LicenseRecoveryRecord> LicenseRecoveryRecords => Set<LicenseRecoveryRecord>();
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         configurationBuilder.Properties<decimal>().HaveConversion<DecimalToScaledLongConverter>();
@@ -26,6 +69,16 @@ public sealed class TahabilDbContext : DbContext
         configurationBuilder.Properties<string>().HaveMaxLength(500);
         configurationBuilder.Properties<DateTime>().HaveConversion<UtcDateTimeToStringConverter>();
         configurationBuilder.Properties<DateTime?>().HaveConversion<NullableUtcDateTimeToStringConverter>();
+        // Enums are stored as readable strings so report SQL and forensic queries stay legible.
+        configurationBuilder.Properties<SaleStatus>().HaveConversion<string>();
+        configurationBuilder.Properties<PurchaseStatus>().HaveConversion<string>();
+        configurationBuilder.Properties<StockMovementType>().HaveConversion<string>();
+        configurationBuilder.Properties<StockAdjustmentType>().HaveConversion<string>();
+        configurationBuilder.Properties<LedgerEntryType>().HaveConversion<string>();
+        configurationBuilder.Properties<JournalSourceType>().HaveConversion<string>();
+        configurationBuilder.Properties<AccountType>().HaveConversion<string>();
+        configurationBuilder.Properties<LicenseType>().HaveConversion<string>();
+        configurationBuilder.Properties<MachineBindingPolicy>().HaveConversion<string>();
         base.ConfigureConventions(configurationBuilder);
     }
 
@@ -103,6 +156,7 @@ public sealed class TahabilDbContext : DbContext
             e.HasIndex(x => x.Key).IsUnique();
         });
 
+        ModelConfiguration.ConfigureBusinessModel(modelBuilder);
         base.OnModelCreating(modelBuilder);
         SnakeCaseNaming.Apply(modelBuilder);
     }
