@@ -9,8 +9,11 @@
 
 | Capability | Evidence |
 |---|---|
-| Windows CI builds, tests, publishes and launches the real EXE | run `41528496087`: build ✅, test ✅ (35 + 9), publish ✅ |
-| 44 automated tests green (35 domain, 9 SQLite integration) | `dotnet test` output in diagnostics issue #1 |
+| Windows CI builds, tests, publishes and launches the real EXE | latest `ci` run: build ✅, 51 tests ✅, publish ✅, EXE launch ✅, UI render ✅ |
+| 51 automated tests green (35 domain, 9 persistence, 7 application workflow) | `Passed!` lines from `dotnet test`, diagnostics issue #1 |
+| Atomic sale posting (stock + ledger + journal + audit) | `SalesWorkflowTests` (7 tests) |
+| Atomic purchase with weighted-average recost | `SalesWorkflowTests.Cogs_uses_the_cost_frozen_at_sale_time…` |
+| Tamper-evident audit chain | `AuditService` + chain assertion in tests |
 | Self-contained single-file `Tahabil.exe` produced | CI publish step, `publish/desktop/Tahabil.exe` |
 | SQLite database created at startup with WAL + FK + FULL sync | `DatabaseTests.Wal_mode_and_foreign_keys_are_active` |
 | Exact decimal storage (integer-scaled), UTC timestamps | `DatabaseTests.Decimal_values_roundtrip_exactly...` |
@@ -33,20 +36,20 @@ accounting, reports, exports, thermal printing, licence activation, installer, u
 |---|---|---|
 | `Merqo.Domain.Tests` | 35 | passing |
 | `Merqo.Infrastructure.Tests` | 9 | passing |
-| Total | 44 | passing (run `41528496087`) |
+| `Merqo.Application.Tests` | 7 | passing |
+| Total | 51 | passing (latest green `ci` run on this branch) |
 
 ## 4. Next exact tasks (in order)
 
-1. Complete the full business schema as EF migrations (sales, purchases, ledgers, journals, audit,
-   licence tables) — `TECH-1`, `TECH-2`.
-2. Add the `Merqo.Application` layer: unit of work, permission checks, audit writer, sale/purchase/
-   payment services with real transaction boundaries.
-3. Implement business settings + user/role/permission management + authentication.
-4. Product/category/brand/unit screens; then inventory, POS, sales, customers, suppliers, purchases,
-   expenses, returns, accounting, dashboard, reports.
-5. Printing (raster Bengali receipts), exports (PDF/XLSX/CSV), backup/restore.
-6. Licence generator + offline activation.
-7. Installer, release workflow, QA report, Bangla user manual.
+1. **EF migrations** for the schema (replace `EnsureCreated`) + pre-migration automatic backup (`TECH-1`).
+2. **Remaining application services**: customer payment/collection, sale return, purchase return,
+   expense posting, stock adjustment, void/reversal.
+3. **Authentication + RBAC**: PBKDF2 hashing, permission service, audit on login, session state.
+4. **Business settings screen** and **product/category/brand/unit management** (CRUD + search/export).
+5. **POS screen** wired to `SaleService`, then sales history/reprint, customers, suppliers, purchases,
+   expenses, returns, stock adjustment, accounting, dashboard, the 24 reports.
+6. Printing (raster Bengali receipts), PDF/XLSX/CSV export, backup/restore.
+7. Licence generator + offline activation + installer + release workflow + Bangla user manual.
 
 ## 5. Session-recovery state
 

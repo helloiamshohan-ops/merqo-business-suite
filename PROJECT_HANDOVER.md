@@ -5,9 +5,10 @@ Read this first if you are resuming work on Tahabil.
 ## 1. Ten-second summary
 
 `Tahabil` (MERQO) is a Bangla-first, offline Windows business suite for Bangladeshi shops.
-A layered .NET 10 solution is in place with a **verified calculation engine and SQLite persistence
-core**, a Bangla WPF shell and a Windows CI pipeline that builds, tests, publishes and launches the
-real executable. The business modules are **not built yet** — see `MASTER_CHECKLIST.md`.
+A layered .NET 10 solution is in place with a **verified calculation engine, full relational schema,
+atomic sale/purchase posting services** (stock + ledgers + double-entry journal + hash-chained audit),
+a Bangla WPF shell and a Windows CI pipeline that builds, tests, publishes and launches the real
+executable (51 tests green). The **business screens are not built yet** — see `MASTER_CHECKLIST.md`.
 
 ## 2. Repository facts
 
@@ -42,7 +43,7 @@ gh issue view 1 --json comments --jq '.comments[-1].body'   # read the CI log
 src/Merqo.Domain          entities + pure business rules (no EF, no WPF)  [+ 35 tests]
 src/Merqo.Infrastructure  EF Core/SQLite, paths, logging, diagnostics     [+ 9 tests]
 src/Merqo.Desktop         WPF app (assembly name Tahabil) + MVVM shell
-src/Merqo.Application     (planned) use cases, permissions, transactions, audit
+src/Merqo.Application     use cases: sale/purchase/stock/ledger/journal/audit  [+ 7 tests]
 tests/                    xunit suites
 docs/                     all design and process documents
 .github/workflows/ci.yml  Windows build → test → publish → smoke launch → artefacts
@@ -60,11 +61,12 @@ docs/                     all design and process documents
 
 ## 6. Immediate next steps
 
-1. Full schema + EF migrations (`docs/DATABASE_SCHEMA.md` §4 is the plan).
-2. `Merqo.Application` layer + audit writer + permission service.
-3. Settings, users/roles, then catalogue → inventory → POS → sales → parties → purchases → expenses
-   → returns → accounting → dashboard → reports.
-4. Printing, exports, backup/restore, licensing, installer, release.
+1. EF migrations (replace `EnsureCreated`) and pre-migration backup.
+2. Remaining services: payment collection, returns, expenses, stock adjustment, void/reversal.
+3. Authentication + RBAC + session/permission service.
+4. Screens: settings → products/catalogue → POS → sales history → parties → purchases → expenses →
+   returns → stock adjustment → accounting → dashboard → reports.
+5. Printing, exports, backup/restore, licensing, installer, release.
 
 ## 7. Traps discovered so far (save yourself the CI cycles)
 
