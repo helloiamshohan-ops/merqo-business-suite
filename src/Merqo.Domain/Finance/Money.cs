@@ -1,4 +1,4 @@
-namespace Merqo.Domain.Money;
+namespace Merqo.Domain.Finance;
 
 /// <summary>
 /// Exact monetary amount expressed in the currency minor unit (poisha for BDT).

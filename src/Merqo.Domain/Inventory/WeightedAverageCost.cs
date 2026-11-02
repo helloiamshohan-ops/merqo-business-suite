@@ -1,4 +1,4 @@
-using Merqo.Domain.Money;
+using Merqo.Domain.Finance;
 
 namespace Merqo.Domain.Inventory;
 

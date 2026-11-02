@@ -1,4 +1,4 @@
-namespace Merqo.Domain.Money;
+namespace Merqo.Domain.Finance;
 
 /// <summary>
 /// Documented rounding and allocation rules for all financial arithmetic.

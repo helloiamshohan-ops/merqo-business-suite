@@ -1,27 +1,24 @@
 <Project>
   <!--
-    Central package management. Versions are pinned here (and re-pinned to exact builds during
-    release hardening) so that every developer and the Windows release pipeline restore the same graph.
+    Central package management. Every version below is pinned to the exact build resolved by the
+    Windows pipeline, so local and CI restores are byte-identical (reproducible releases).
+    Floating versions remain permitted only as a bootstrap aid while a brand-new package is being
+    introduced; the release gate fails if any version still contains '*'.
   -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <!--
-      Bootstrap mode: floating versions are permitted ONLY while the exact graph is being established.
-      The resolved list printed by CI is then pinned here verbatim (release hardening), after which
-      this switch is removed so builds are fully reproducible.
-    -->
     <CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.*" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.*" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.*" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.*" />
-    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.*" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.*" />
-    <PackageVersion Include="xunit" Version="2.*" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="2.*" />
-    <PackageVersion Include="FluentAssertions" Version="7.*" />
-    <PackageVersion Include="coverlet.collector" Version="6.*" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageVersion Include="FluentAssertions" Version="7.2.2" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
   </ItemGroup>
 </Project>

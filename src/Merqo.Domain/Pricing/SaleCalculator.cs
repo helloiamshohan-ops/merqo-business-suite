@@ -1,5 +1,5 @@
 using Merqo.Domain.Common;
-using Merqo.Domain.Money;
+using Merqo.Domain.Finance;
 
 namespace Merqo.Domain.Pricing;
 

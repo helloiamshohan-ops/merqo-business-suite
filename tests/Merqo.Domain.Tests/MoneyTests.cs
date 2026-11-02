@@ -1,5 +1,5 @@
 using FluentAssertions;
-using Merqo.Domain.Money;
+using Merqo.Domain.Finance;
 using Xunit;
 
 namespace Merqo.Domain.Tests;
