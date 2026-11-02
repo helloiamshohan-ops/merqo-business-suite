@@ -61,10 +61,7 @@ public sealed partial class SystemStatusViewModel : ObservableObject
             await using var context = TahabilDbContextFactory.Create(_paths.DatabasePath);
             var units = await context.Units.CountAsync().ConfigureAwait(true);
             var products = await context.Products.CountAsync().ConfigureAwait(true);
-            var journalMode = await context.Database
-                .SqlQueryRaw<string>("PRAGMA journal_mode;")
-                .SingleAsync()
-                .ConfigureAwait(true);
+            var journalMode = await SqliteDiagnostics.JournalModeAsync(context).ConfigureAwait(true);
 
             IntegrityText = result.IntegrityOk ? "সঠিক (ok)" : "সমস্যা পাওয়া গেছে";
             UnitCountText = units.ToString("N0");
