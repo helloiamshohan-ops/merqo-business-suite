@@ -1,0 +1,44 @@
+# Build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+publish/
+*.user
+*.suo
+.vs/
+
+# Test and coverage output
+TestResults/
+coverage*.xml
+coverage*.json
+
+# Local runtime data — never commit a shop's database or logs
+*.db
+*.db-wal
+*.db-shm
+tahabil.db*
+logs/
+backups/
+exports/
+
+# Secrets: signing keys, license vaults, certificates
+*.pfx
+*.p12
+*.snk
+*.key
+*.keys
+secrets/
+license-keys/
+*.license
+*.env
+
+# OS noise
+Thumbs.db
+.DS_Store
+
+# Tool caches
+.nuget/
+.dotnet/
+packages/

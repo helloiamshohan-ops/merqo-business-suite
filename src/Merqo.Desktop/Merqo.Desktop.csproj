@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>Merqo.Desktop</RootNamespace>
+    <AssemblyName>Tahabil</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <SatelliteResourceLanguages>bn;en</SatelliteResourceLanguages>
+    <Product>Tahabil</Product>
+    <AssemblyTitle>Tahabil — ব্যবসা ব্যবস্থাপনা</AssemblyTitle>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Merqo.Domain/Merqo.Domain.csproj" />
+    <ProjectReference Include="../Merqo.Infrastructure/Merqo.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,188 @@
+<Window x:Class="Merqo.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Merqo.Desktop.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:SystemStatusViewModel}"
+        Title="তাহাবিল — ব্যবসা ব্যবস্থাপনা"
+        Height="720" Width="1180" MinHeight="600" MinWidth="960"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource SurfaceAlt}"
+        FontFamily="{StaticResource AppFont}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="56" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="32" />
+        </Grid.RowDefinitions>
+
+        <!-- Top bar -->
+        <Border Grid.Row="0" Background="{StaticResource Surface}" BorderBrush="{StaticResource Border}" BorderThickness="0,0,0,1">
+            <Grid Margin="20,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="30" Height="30" CornerRadius="8" Background="{StaticResource BrandPrimary}" VerticalAlignment="Center">
+                        <TextBlock Text="ত" Foreground="White" FontSize="16" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ProductName}" FontSize="15" FontWeight="SemiBold" />
+                        <TextBlock Text="MERQO প্রোডাক্ট" Style="{StaticResource MutedText}" FontSize="11" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="সংস্করণ" Style="{StaticResource MutedText}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBlock Text="{Binding Version}" Style="{StaticResource BaseText}" VerticalAlignment="Center" FontFamily="{StaticResource NumericFont}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Body -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="236" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Sidebar -->
+            <Border Grid.Column="0" Background="{StaticResource Surface}" BorderBrush="{StaticResource Border}" BorderThickness="0,0,1,0">
+                <DockPanel Margin="12,16,12,12">
+                    <TextBlock DockPanel.Dock="Top" Text="নেভিগেশন" Style="{StaticResource MutedText}" Margin="8,0,0,8" />
+                    <StackPanel DockPanel.Dock="Bottom">
+                        <Border Background="{StaticResource SurfaceAlt}" CornerRadius="6" Padding="10,8">
+                            <StackPanel>
+                                <TextBlock Text="ডাটা ফোল্ডার" Style="{StaticResource MutedText}" />
+                                <TextBlock Text="{Binding DatabasePath}" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DatabasePath}" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                    <StackPanel>
+                        <Border Background="{StaticResource BrandPrimarySoft}" CornerRadius="6" Padding="10,9">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="8" Height="8" Fill="{StaticResource BrandPrimary}" VerticalAlignment="Center" />
+                                <TextBlock Text="সিস্টেম প্রস্তুতি" Margin="8,0,0,0" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Content -->
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="24,20,24,20">
+                <StackPanel MaxWidth="1000" HorizontalAlignment="Left">
+                    <TextBlock Text="সিস্টেম প্রস্তুতি" Style="{StaticResource PageTitle}" />
+                    <TextBlock Text="অ্যাপ্লিকেশন, ডাটাবেস ও ফাইল নিরাপত্তার বর্তমান অবস্থা।"
+                               Style="{StaticResource MutedText}" Margin="0,4,0,16" />
+
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Ellipse Grid.Column="0" Width="10" Height="10" VerticalAlignment="Center" Margin="0,0,12,0">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="{StaticResource Warning}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsHealthy}" Value="True">
+                                                <Setter Property="Fill" Value="{StaticResource Success}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding StatusHeadline}" Style="{StaticResource SectionTitle}" />
+                                <TextBlock Text="{Binding StatusDetail}" Style="{StaticResource MutedText}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="রিফ্রেশ" Style="{StaticResource SecondaryButton}" Command="{Binding RefreshCommand}" Margin="0,0,8,0" />
+                                <Button Content="ডাটা ফোল্ডার" Style="{StaticResource PrimaryButton}" Command="{Binding OpenDataFolderCommand}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="ডাটাবেস" Style="{StaticResource SectionTitle}" Margin="0,0,0,12" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="34" />
+                                    <RowDefinition Height="34" />
+                                    <RowDefinition Height="34" />
+                                    <RowDefinition Height="34" />
+                                    <RowDefinition Height="34" />
+                                    <RowDefinition Height="34" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="ফাইল" Style="{StaticResource KeyCell}" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding DatabasePath}" Style="{StaticResource ValueCell}" FontFamily="{StaticResource NumericFont}" />
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="ইন্টিগ্রিটি" Style="{StaticResource KeyCell}" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding IntegrityText}" Style="{StaticResource ValueCell}" />
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="জার্নাল মোড" Style="{StaticResource KeyCell}" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding JournalModeText}" Style="{StaticResource ValueCell}" FontFamily="{StaticResource NumericFont}" />
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="আকার" Style="{StaticResource KeyCell}" />
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding DatabaseSizeText}" Style="{StaticResource ValueCell}" FontFamily="{StaticResource NumericFont}" />
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="একক (ইউনিট)" Style="{StaticResource KeyCell}" />
+                                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding UnitCountText}" Style="{StaticResource ValueCell}" FontFamily="{StaticResource NumericFont}" />
+
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="পণ্য" Style="{StaticResource KeyCell}" />
+                                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding ProductCountText}" Style="{StaticResource ValueCell}" FontFamily="{StaticResource NumericFont}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                        <StackPanel>
+                            <TextBlock Text="ফাইল অবস্থান" Style="{StaticResource SectionTitle}" Margin="0,0,0,12" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="34" />
+                                    <RowDefinition Height="34" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="লগ" Style="{StaticResource KeyCell}" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding LogsDirectory}" Style="{StaticResource ValueCell}" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="ব্যাকআপ" Style="{StaticResource KeyCell}" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding BackupsDirectory}" Style="{StaticResource ValueCell}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Status bar -->
+        <Border Grid.Row="2" Background="{StaticResource Surface}" BorderBrush="{StaticResource Border}" BorderThickness="0,1,0,0">
+            <Grid Margin="20,0">
+                <TextBlock Text="MERQO · তাহাবিল" Style="{StaticResource MutedText}" VerticalAlignment="Center" FontSize="11" />
+                <TextBlock Text="{Binding BuildLabel}" Style="{StaticResource MutedText}" FontSize="11"
+                           HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="{StaticResource NumericFont}" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

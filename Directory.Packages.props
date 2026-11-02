@@ -1,0 +1,21 @@
+<Project>
+  <!--
+    Central package management. Versions are pinned here (and re-pinned to exact builds during
+    release hardening) so that every developer and the Windows release pipeline restore the same graph.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.*" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.*" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.*" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.*" />
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.*" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageVersion Include="xunit" Version="2.*" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.*" />
+    <PackageVersion Include="FluentAssertions" Version="7.*" />
+    <PackageVersion Include="coverlet.collector" Version="6.*" />
+  </ItemGroup>
+</Project>

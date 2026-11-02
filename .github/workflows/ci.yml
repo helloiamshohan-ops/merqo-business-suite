@@ -1,0 +1,127 @@
+name: ci
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      diagnostics:
+        description: 'Post the full build log to the diagnostics issue'
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: 'true'
+  DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 'true'
+
+jobs:
+  build-test:
+    name: Windows build and test
+    runs-on: windows-latest
+    steps:
+      - name: Prepare log folder
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path logs | Out-Null
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Environment report
+        shell: pwsh
+        run: |
+          dotnet --info *>&1 | Tee-Object -FilePath logs\environment.log
+
+      - name: Restore
+        shell: pwsh
+        run: |
+          dotnet restore Merqo.slnx *>&1 | Tee-Object -FilePath logs\restore.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Resolved package graph
+        shell: pwsh
+        run: dotnet list Merqo.slnx package *>&1 | Tee-Object -FilePath logs\packages.log
+
+      - name: Build
+        shell: pwsh
+        run: |
+          dotnet build Merqo.slnx -c Release --no-restore *>&1 | Tee-Object -FilePath logs\build.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Test
+        shell: pwsh
+        run: |
+          dotnet test Merqo.slnx -c Release --no-build --logger "trx;LogFileName=results.trx" --results-directory TestResults *>&1 | Tee-Object -FilePath logs\test.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Publish desktop (win-x64, self-contained single file)
+        shell: pwsh
+        run: |
+          dotnet publish src/Merqo.Desktop/Merqo.Desktop.csproj -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:DebugType=embedded -o publish/desktop *>&1 | Tee-Object -FilePath logs\publish.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-ChildItem publish/desktop | Select-Object Name, Length | Format-Table | Out-String | Tee-Object -Append -FilePath logs\publish.log
+
+      - name: Smoke launch of the built executable
+        shell: pwsh
+        run: |
+          $exe = 'publish/desktop/Tahabil.exe'
+          if (-not (Test-Path $exe)) { Write-Host 'EXE MISSING'; exit 1 }
+          $env:TAHABIL_DATA_DIR = Join-Path $env:RUNNER_TEMP 'tahabil-smoke'
+          $proc = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 12
+          $alive = -not $proc.HasExited
+          Write-Host "process_alive_after_start=$alive pid=$($proc.Id)"
+          if ($proc.HasExited) { Write-Host "exit_code=$($proc.ExitCode)" }
+          Get-ChildItem $env:TAHABIL_DATA_DIR -Recurse -File | Select-Object FullName, Length | Format-Table | Out-String | Write-Host
+          if ($alive) { Stop-Process -Id $proc.Id -Force }
+          $db = Join-Path $env:TAHABIL_DATA_DIR 'tahabil.db'
+          if (-not (Test-Path $db)) { Write-Host 'DATABASE NOT CREATED BY APP'; exit 1 }
+          Write-Host 'SMOKE_OK: database created by the real executable'
+          *>&1 | Tee-Object -FilePath logs\smoke.log
+
+      - name: Upload executable and test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tahabil-desktop-ci
+          path: |
+            publish/desktop/**
+            TestResults/**
+            logs/**
+          retention-days: 14
+
+      - name: Publish diagnostics to tracking issue
+        if: failure() || inputs.diagnostics == true
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $files = Get-ChildItem logs\*.log -ErrorAction SilentlyContinue
+          $sb = New-Object System.Text.StringBuilder
+          [void]$sb.AppendLine("### CI run ${{ github.run_id }} — ${{ github.event_name }} — ${{ github.sha }}")
+          [void]$sb.AppendLine('```')
+          foreach ($f in $files) {
+            [void]$sb.AppendLine("----- $($f.Name) -----")
+            [void]$sb.AppendLine((Get-Content $f.FullName -Raw))
+          }
+          if (Test-Path TestResults) {
+            Get-ChildItem TestResults -Filter *.trx | ForEach-Object {
+              [void]$sb.AppendLine("----- $($_.Name) -----")
+              [void]$sb.AppendLine((Get-Content $_.FullName -Raw))
+            }
+          }
+          [void]$sb.AppendLine('```')
+          $text = $sb.ToString()
+          if ($text.Length -gt 60000) { $text = '...[truncated]...' + $text.Substring($text.Length - 59000) }
+          Set-Content -Path diagnostics.md -Value $text -Encoding utf8
+          gh issue comment 1 --body-file diagnostics.md --repo "${{ github.repository }}"
