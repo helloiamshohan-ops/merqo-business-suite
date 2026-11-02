@@ -5,6 +5,12 @@
   -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!--
+      Bootstrap mode: floating versions are permitted ONLY while the exact graph is being established.
+      The resolved list printed by CI is then pinned here verbatim (release hardening), after which
+      this switch is removed so builds are fully reproducible.
+    -->
+    <CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.*" />

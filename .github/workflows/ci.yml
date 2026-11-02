@@ -105,14 +105,17 @@ jobs:
           retention-days: 14
 
       - name: Publish diagnostics to tracking issue
-        if: failure() || inputs.diagnostics == true
+        if: always() && !cancelled()
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $files = Get-ChildItem logs\*.log -ErrorAction SilentlyContinue
+          if ('${{ job.status }}' -eq 'success') {
+            $files = Get-ChildItem logs\packages.log -ErrorAction SilentlyContinue
+          }
           $sb = New-Object System.Text.StringBuilder
-          [void]$sb.AppendLine("### CI run ${{ github.run_id }} — ${{ github.event_name }} — ${{ github.sha }}")
+          [void]$sb.AppendLine("### CI ${{ job.status }} — run ${{ github.run_id }} — ${{ github.event_name }} — ${{ github.sha }}")
           [void]$sb.AppendLine('```')
           foreach ($f in $files) {
             [void]$sb.AppendLine("----- $($f.Name) -----")
