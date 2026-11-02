@@ -5,17 +5,32 @@ namespace Merqo.Infrastructure.Persistence;
 
 /// <summary>
 /// Timestamps are persisted as round-trippable UTC ISO-8601 strings so that SQLite ordering is
-/// lexicographic-correct and no local-time ambiguity can enter the ledger.
+/// lexicographic-correct and no local-time ambiguity can ever enter the ledger.
 /// </summary>
 public sealed class UtcDateTimeToStringConverter : ValueConverter<DateTime, string>
 {
     public const string Format = "yyyy-MM-ddTHH:mm:ss.fffffffZ";
 
     public UtcDateTimeToStringConverter()
-        : base(
-            v => v.Kind == DateTimeKind.Utc ? v.ToString(Format, CultureInfo.InvariantCulture) : v.ToUniversalTime().ToString(Format, CultureInfo.InvariantCulture),
-            v => System.DateTime.Parse(v, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind | DateTimeStyles.AdjustToUniversal))
+        : base(v => Format(v), v => Parse(v))
     {
+    }
+
+    public static string Format(DateTime value)
+    {
+        var utc = value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
+        return utc.ToString(Format, CultureInfo.InvariantCulture);
+    }
+
+    public static DateTime Parse(string value)
+    {
+        var parsed = DateTime.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+        return parsed.Kind == DateTimeKind.Utc ? parsed : DateTime.SpecifyKind(parsed, DateTimeKind.Utc);
     }
 }
 
@@ -23,8 +38,8 @@ public sealed class NullableUtcDateTimeToStringConverter : ValueConverter<DateTi
 {
     public NullableUtcDateTimeToStringConverter()
         : base(
-            v => v == null ? null : (v.Value.Kind == DateTimeKind.Utc ? v.Value.ToString(UtcDateTimeToStringConverter.Format, CultureInfo.InvariantCulture) : v.Value.ToUniversalTime().ToString(UtcDateTimeToStringConverter.Format, CultureInfo.InvariantCulture)),
-            v => v == null ? null : System.DateTime.Parse(v, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind | DateTimeStyles.AdjustToUniversal))
+            v => v == null ? null : UtcDateTimeToStringConverter.Format(v.Value),
+            v => v == null ? null : UtcDateTimeToStringConverter.Parse(v))
     {
     }
 }
