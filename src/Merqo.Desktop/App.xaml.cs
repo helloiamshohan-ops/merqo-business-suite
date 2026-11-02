@@ -1,4 +1,7 @@
+using System.IO;
 using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Merqo.Desktop.ViewModels;
 using Merqo.Infrastructure;
@@ -42,11 +45,67 @@ public partial class App : Application
         Services = services.BuildServiceProvider();
 
         var viewModel = Services.GetRequiredService<SystemStatusViewModel>();
+
+        var renderPath = GetArgumentValue(e.Args, "--render-ui");
+        if (renderPath is not null)
+        {
+            // Automated visual verification: render the real window to a PNG and exit.
+            _ = RenderUiToFileAsync(viewModel, renderPath);
+            return;
+        }
+
         var window = new MainWindow { DataContext = viewModel };
         MainWindow = window;
         window.Show();
 
         _ = viewModel.RefreshAsync();
+    }
+
+    private static string? GetArgumentValue(string[] args, string name)
+    {
+        var index = Array.IndexOf(args, name);
+        return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
+    }
+
+    private async Task RenderUiToFileAsync(SystemStatusViewModel viewModel, string outputPath)
+    {
+        try
+        {
+            var window = new MainWindow { DataContext = viewModel, Width = 1180, Height = 720 };
+            MainWindow = window;
+            window.Show();
+
+            await viewModel.RefreshAsync();
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            window.UpdateLayout();
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+
+            var width = (int)Math.Max(window.ActualWidth, 960);
+            var height = (int)Math.Max(window.ActualHeight, 600);
+            var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(window);
+
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(bitmap));
+
+            var directory = Path.GetDirectoryName(Path.GetFullPath(outputPath));
+            if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
+            await using var stream = File.Create(outputPath);
+            encoder.Save(stream);
+
+            Logger.Info(LogCategories.Ui, "UI rendered to file", new Dictionary<string, object?>
+            {
+                ["path"] = outputPath,
+                ["width"] = width,
+                ["height"] = height
+            });
+            Shutdown(0);
+        }
+        catch (Exception ex)
+        {
+            Logger.Critical(LogCategories.Ui, "UI render failed", ex);
+            Shutdown(2);
+        }
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

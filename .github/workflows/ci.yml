@@ -75,23 +75,48 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Get-ChildItem publish/desktop | Select-Object Name, Length | Format-Table | Out-String | Tee-Object -Append -FilePath logs\publish.log
 
-      - name: Smoke launch of the built executable
+      - name: Smoke launch and UI render of the built executable
         shell: pwsh
         run: |
-          $exe = 'publish/desktop/Tahabil.exe'
-          if (-not (Test-Path $exe)) { Write-Host 'EXE MISSING'; exit 1 }
-          $env:TAHABIL_DATA_DIR = Join-Path $env:RUNNER_TEMP 'tahabil-smoke'
-          $proc = Start-Process -FilePath $exe -PassThru
-          Start-Sleep -Seconds 12
-          $alive = -not $proc.HasExited
-          Write-Host "process_alive_after_start=$alive pid=$($proc.Id)"
-          if ($proc.HasExited) { Write-Host "exit_code=$($proc.ExitCode)" }
-          Get-ChildItem $env:TAHABIL_DATA_DIR -Recurse -File | Select-Object FullName, Length | Format-Table | Out-String | Write-Host
-          if ($alive) { Stop-Process -Id $proc.Id -Force }
-          $db = Join-Path $env:TAHABIL_DATA_DIR 'tahabil.db'
-          if (-not (Test-Path $db)) { Write-Host 'DATABASE NOT CREATED BY APP'; exit 1 }
-          Write-Host 'SMOKE_OK: database created by the real executable'
-          *>&1 | Tee-Object -FilePath logs\smoke.log
+          $log = 'logs\smoke.log'
+          Start-Transcript -Path $log -Force | Out-Null
+          try {
+            $exe = 'publish/desktop/Tahabil.exe'
+            if (-not (Test-Path $exe)) { throw 'EXE MISSING' }
+            $env:TAHABIL_DATA_DIR = Join-Path $env:RUNNER_TEMP 'tahabil-smoke'
+            if (Test-Path $env:TAHABIL_DATA_DIR) { Remove-Item $env:TAHABIL_DATA_DIR -Recurse -Force }
+
+            # 1) Interactive launch: the app must start, create its database and stay alive.
+            $proc = Start-Process -FilePath $exe -PassThru
+            Start-Sleep -Seconds 15
+            $alive = -not $proc.HasExited
+            Write-Host "process_alive_after_start=$alive pid=$($proc.Id)"
+            if ($proc.HasExited) { Write-Host "exit_code=$($proc.ExitCode)" }
+            if ($alive) { Stop-Process -Id $proc.Id -Force }
+
+            $db = Join-Path $env:TAHABIL_DATA_DIR 'tahabil.db'
+            if (-not (Test-Path $db)) {
+              Write-Host 'DATABASE NOT CREATED BY APP'
+              Get-ChildItem $env:TAHABIL_DATA_DIR -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName; Get-Content $_.FullName -Tail 40 -ErrorAction SilentlyContinue }
+              throw 'DATABASE NOT CREATED BY APP'
+            }
+            Write-Host "database_created=$((Get-Item $db).Length) bytes"
+            Get-ChildItem $env:TAHABIL_DATA_DIR -Recurse -File | Select-Object FullName, Length | Format-Table | Out-String | Write-Host
+
+            # 2) Deterministic UI render: proves the WPF window composes and lays out on Windows.
+            $shot = Join-Path $env:GITHUB_WORKSPACE 'artifacts\ui-readiness.png'
+            New-Item -ItemType Directory -Force -Path (Split-Path $shot) | Out-Null
+            $render = Start-Process -FilePath $exe -ArgumentList '--render-ui', $shot -PassThru -Wait
+            Write-Host "render_exit_code=$($render.ExitCode)"
+            if (-not (Test-Path $shot)) { throw 'UI RENDER PRODUCED NO IMAGE' }
+            Write-Host "ui_render_size=$((Get-Item $shot).Length) bytes"
+            Write-Host 'SMOKE_OK'
+          } catch {
+            Write-Host "SMOKE_FAILED: $_"
+            throw
+          } finally {
+            Stop-Transcript | Out-Null
+          }
 
       - name: Upload executable and test results
         if: always()
@@ -102,6 +127,7 @@ jobs:
             publish/desktop/**
             TestResults/**
             logs/**
+            artifacts/**
           retention-days: 14
 
       - name: Publish diagnostics to tracking issue
