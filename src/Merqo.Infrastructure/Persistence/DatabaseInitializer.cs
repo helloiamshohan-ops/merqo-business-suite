@@ -1,3 +1,4 @@
+using Merqo.Domain.Accounting;
 using Merqo.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,6 +36,9 @@ public sealed class DatabaseInitializer
 
         var seededUnits = await SeedUnitsAsync(context, cancellationToken).ConfigureAwait(false);
         await SeedBusinessSettingsAsync(context, cancellationToken).ConfigureAwait(false);
+        await SeedChartOfAccountsAsync(context, cancellationToken).ConfigureAwait(false);
+        await SeedPaymentMethodsAsync(context, cancellationToken).ConfigureAwait(false);
+        await SeedExpenseCategoriesAsync(context, cancellationToken).ConfigureAwait(false);
 
         var integrityOk = await CheckIntegrityAsync(context, cancellationToken).ConfigureAwait(false);
         var messages = new List<string>
@@ -61,6 +65,61 @@ public sealed class DatabaseInitializer
             CurrencySymbol = "৳",
             InvoiceFooter = "ধন্যবাদ, আবার আসবেন।"
         });
+        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return true;
+    }
+
+    private static async Task<bool> SeedChartOfAccountsAsync(TahabilDbContext context, CancellationToken cancellationToken)
+    {
+        if (await context.Accounts.AnyAsync(cancellationToken).ConfigureAwait(false)) return false;
+        foreach (var account in SystemReferenceData.ChartOfAccounts)
+        {
+            context.Accounts.Add(new Account
+            {
+                Code = account.Code,
+                NameBn = account.NameBn,
+                NameEn = account.NameEn,
+                AccountType = account.Type,
+                IsSystem = true
+            });
+        }
+        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return true;
+    }
+
+    private static async Task<bool> SeedPaymentMethodsAsync(TahabilDbContext context, CancellationToken cancellationToken)
+    {
+        if (await context.PaymentMethods.AnyAsync(cancellationToken).ConfigureAwait(false)) return false;
+        foreach (var method in SystemReferenceData.PaymentMethods)
+        {
+            context.PaymentMethods.Add(new PaymentMethod
+            {
+                NameBn = method.NameBn,
+                NameEn = method.NameEn,
+                IsCash = method.IsCash,
+                IsSystem = true,
+                CashAccountCode = method.CashAccountCode,
+                SortOrder = method.SortOrder
+            });
+        }
+        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return true;
+    }
+
+    private static async Task<bool> SeedExpenseCategoriesAsync(TahabilDbContext context, CancellationToken cancellationToken)
+    {
+        if (await context.ExpenseCategories.AnyAsync(cancellationToken).ConfigureAwait(false)) return false;
+        foreach (var category in SystemReferenceData.ExpenseCategories)
+        {
+            context.ExpenseCategories.Add(new ExpenseCategory
+            {
+                NameBn = category.NameBn,
+                NameEn = category.NameEn,
+                AccountCode = category.AccountCode,
+                IsSystem = true,
+                SortOrder = category.SortOrder
+            });
+        }
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return true;
     }

@@ -1,7 +1,9 @@
 <Solution>
   <Project Path="src/Merqo.Domain/Merqo.Domain.csproj" />
   <Project Path="src/Merqo.Infrastructure/Merqo.Infrastructure.csproj" />
+  <Project Path="src/Merqo.Application/Merqo.Application.csproj" />
   <Project Path="src/Merqo.Desktop/Merqo.Desktop.csproj" />
   <Project Path="tests/Merqo.Domain.Tests/Merqo.Domain.Tests.csproj" />
   <Project Path="tests/Merqo.Infrastructure.Tests/Merqo.Infrastructure.Tests.csproj" />
+  <Project Path="tests/Merqo.Application.Tests/Merqo.Application.Tests.csproj" />
 </Solution>
