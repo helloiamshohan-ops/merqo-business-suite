@@ -173,7 +173,7 @@ public sealed class SaleService
                     UnitId = product.UnitId,
                     Quantity = line.Quantity,
                     BaseQuantity = bases[i],
-                    UnitPrice = line.UnitPrice,
+                    UnitPrice = line.UnitSellPrice,
                     GrossAmount = line.GrossAmount,
                     LineDiscount = line.LineDiscountAmount,
                     InvoiceDiscountShare = line.InvoiceDiscountShare,

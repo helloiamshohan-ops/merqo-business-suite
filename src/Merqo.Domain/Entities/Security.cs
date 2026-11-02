@@ -44,6 +44,8 @@ public sealed class UserRole : Entity
 /// </summary>
 public sealed class AuditLog : Entity
 {
+    /// <summary>Monotonic insertion ordinal; the hash chain is ordered by this, never by timestamp.</summary>
+    public long Ordinal { get; set; }
     public DateTime OccurredAtUtc { get; set; } = DateTime.UtcNow;
     public Guid? UserId { get; set; }
     public string? Username { get; set; }

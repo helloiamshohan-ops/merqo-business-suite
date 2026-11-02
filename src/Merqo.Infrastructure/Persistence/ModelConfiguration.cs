@@ -339,6 +339,7 @@ public static class ModelConfiguration
             e.Property(x => x.PreviousHash).HasMaxLength(64);
             e.Property(x => x.RowHash).HasMaxLength(64);
             e.HasIndex(x => x.OccurredAtUtc);
+            e.HasIndex(x => x.Ordinal).IsUnique();
             e.HasIndex(x => new { x.EntityType, x.EntityId });
         });
 

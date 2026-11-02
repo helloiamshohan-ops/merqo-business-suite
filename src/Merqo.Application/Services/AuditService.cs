@@ -26,16 +26,20 @@ public sealed class AuditService
         bool success = true,
         CancellationToken cancellationToken = default)
     {
-        var previousHash = await _context.AuditLogs
+        var last = await _context.AuditLogs
             .AsNoTracking()
-            .OrderByDescending(a => a.OccurredAtUtc)
-            .Select(a => a.RowHash)
+            .OrderByDescending(a => a.Ordinal)
+            .Select(a => new { a.RowHash, a.Ordinal })
             .FirstOrDefaultAsync(cancellationToken)
-            .ConfigureAwait(false) ?? string.Empty;
+            .ConfigureAwait(false);
+
+        var previousHash = last?.RowHash ?? string.Empty;
+        var ordinal = (last?.Ordinal ?? 0L) + 1L;
 
         var occurredAt = DateTime.UtcNow;
         var row = new AuditLog
         {
+            Ordinal = ordinal,
             OccurredAtUtc = occurredAt,
             UserId = userId,
             Username = username,
@@ -54,6 +58,7 @@ public sealed class AuditService
     public static string ComputeHash(AuditLog row)
     {
         var payload = string.Join('|',
+            row.Ordinal.ToString(System.Globalization.CultureInfo.InvariantCulture),
             row.PreviousHash,
             row.OccurredAtUtc.ToString("O"),
             row.Username ?? string.Empty,
@@ -69,7 +74,7 @@ public sealed class AuditService
     public async Task<Guid?> FindFirstTamperedRowAsync(CancellationToken cancellationToken = default)
     {
         var rows = await _context.AuditLogs.AsNoTracking()
-            .OrderBy(a => a.OccurredAtUtc)
+            .OrderBy(a => a.Ordinal)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
