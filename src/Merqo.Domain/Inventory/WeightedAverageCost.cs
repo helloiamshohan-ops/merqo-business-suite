@@ -12,7 +12,7 @@ public static class WeightedAverageCost
     /// <summary>Returns the new average unit cost after receiving <paramref name="inQuantity"/> at <paramref name="inUnitCost"/>.</summary>
     public static decimal NewAverage(decimal currentQuantity, decimal currentAverageCost, decimal inQuantity, decimal inUnitCost)
     {
-        if (inQuantity < 0m) throw new ArgumentOutOfRangeException(nameof(inQuantity));
+        ArgumentOutOfRangeException.ThrowIfNegative(inQuantity);
         var existingQty = currentQuantity > 0m ? currentQuantity : 0m;
         var existingValue = currentQuantity > 0m ? currentQuantity * currentAverageCost : 0m;
         var incomingValue = inQuantity * inUnitCost;

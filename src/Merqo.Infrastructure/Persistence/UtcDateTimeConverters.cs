@@ -9,7 +9,7 @@ namespace Merqo.Infrastructure.Persistence;
 /// </summary>
 public sealed class UtcDateTimeToStringConverter : ValueConverter<DateTime, string>
 {
-    public const string Format = "yyyy-MM-ddTHH:mm:ss.fffffffZ";
+    public const string FormatString = "yyyy-MM-ddTHH:mm:ss.fffffffZ";
 
     public UtcDateTimeToStringConverter()
         : base(v => Format(v), v => Parse(v))
@@ -24,7 +24,7 @@ public sealed class UtcDateTimeToStringConverter : ValueConverter<DateTime, stri
             DateTimeKind.Local => value.ToUniversalTime(),
             _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
         };
-        return utc.ToString(Format, CultureInfo.InvariantCulture);
+        return utc.ToString(FormatString, CultureInfo.InvariantCulture);
     }
 
     public static DateTime Parse(string value)
