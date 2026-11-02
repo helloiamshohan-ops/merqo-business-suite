@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Merqo.Domain.Entities;
 using Merqo.Infrastructure;
 using Merqo.Infrastructure.Persistence;
