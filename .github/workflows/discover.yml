@@ -1,0 +1,45 @@
+name: toolchain-discovery
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/discover.yml'
+
+jobs:
+  discovery:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Report SDK
+        shell: pwsh
+        run: |
+          dotnet --info
+      - name: NuGet available versions
+        shell: pwsh
+        run: |
+          $pkgs = @(
+            'Microsoft.EntityFrameworkCore.Sqlite','Microsoft.EntityFrameworkCore.Design',
+            'Microsoft.Extensions.DependencyInjection','Microsoft.Extensions.Hosting',
+            'Microsoft.Extensions.Logging.Abstractions','Microsoft.Extensions.Configuration.Json',
+            'CommunityToolkit.Mvvm','Serilog','Serilog.Sinks.File','Serilog.Extensions.Logging',
+            'QuestPDF','ClosedXML','SkiaSharp','SkiaSharp.HarfBuzz','BCrypt.Net-Next',
+            'xunit','xunit.runner.visualstudio','Microsoft.NET.Test.Sdk','FluentAssertions',
+            'coverlet.collector','System.Security.Cryptography.ProtectedData'
+          )
+          foreach ($p in $pkgs) {
+            try {
+              $r = Invoke-RestMethod -Uri "https://api.nuget.org/v3-flatcontainer/$($p.ToLower())/index.json" -TimeoutSec 60
+              $v = $r.versions | Select-Object -Last 6
+              Write-Host ("{0} => {1}" -f $p, ($v -join ', '))
+            } catch { Write-Host ("{0} => ERROR {1}" -f $p, $_.Exception.Message) }
+          }
+      - name: Installer toolchain (Inno Setup)
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (Test-Path $iscc) { Write-Host "ISCC-FOUND: $iscc" } else { Write-Host "ISCC-MISSING"; Get-ChildItem 'C:\Program Files (x86)' -Directory | Select-Object Name }
+          Write-Host "--- fonts sample ---"
+          (Get-ChildItem C:\Windows\Fonts -Filter *.ttf | Measure-Object).Count
