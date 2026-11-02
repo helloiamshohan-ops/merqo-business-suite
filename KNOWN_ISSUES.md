@@ -11,6 +11,10 @@ suppliers, expenses, accounting, reports, printing, licence activation) do **not
 
 Any UI in the current build is a readiness screen, not a shop counter.
 
+Backend coverage is further along than the UI: sale and purchase posting (stock, ledgers, journal, audit)
+is implemented and covered by integration tests, but there are no product, POS, customer, supplier,
+accounting or report screens yet.
+
 ## B. External verification limits (not defects, but must not be misrepresented)
 
 | ID | Limitation | Impact | Mitigation |
@@ -25,8 +29,8 @@ Any UI in the current build is a readiness screen, not a shop counter.
 | ID | Item | Severity | Status |
 |---|---|---|---|
 | `TECH-1` | EF migrations not yet created (schema uses `EnsureCreated` until the first migration) | Medium | Open — before data model freeze |
-| `TECH-2` | Full business schema (sales/purchases/ledgers/accounting/audit/licence) not yet modelled | High | Open |
-| `TECH-3` | No application-services layer yet; UI must not call EF directly once modules land | Medium | Open |
+| `TECH-2` | Full business schema modelled and exercised; EF **migrations** still pending | Medium | Partly resolved |
+| `TECH-3` | Application services exist for sale/purchase only; the rest of the CRUD surface is still missing | Medium | Open |
 | `TECH-4` | Package versions pinned but `CentralPackageFloatingVersionsEnabled` still true; release gate removes it | Low | Open |
 | `TECH-5` | QuestPDF is free only below USD 1M annual revenue | Legal | Open — revisit before scaling sales, or replace with a permissively licensed renderer |
 | `TECH-6` | Product name "Tahabil" has NOT been trademark-cleared | Legal | Open — owner to commission a search before launch |

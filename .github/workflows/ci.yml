@@ -138,7 +138,7 @@ jobs:
         run: |
           $files = Get-ChildItem logs\*.log -ErrorAction SilentlyContinue
           if ('${{ job.status }}' -eq 'success') {
-            $files = Get-ChildItem logs\packages.log -ErrorAction SilentlyContinue
+            $files = Get-ChildItem logs\packages.log, logs\test.log -ErrorAction SilentlyContinue
           }
           $sb = New-Object System.Text.StringBuilder
           [void]$sb.AppendLine("### CI ${{ job.status }} — run ${{ github.run_id }} — ${{ github.event_name }} — ${{ github.sha }}")

@@ -18,12 +18,12 @@ Every requirement in the brief carries a stable ID here. Status meanings are str
 
 | Status | Count |
 |---|---|
-| VERIFIED | 25 |
+| VERIFIED | 32 |
 | TESTING | 3 |
-| IMPLEMENTED | 9 |
-| IN_PROGRESS | 7 |
+| IMPLEMENTED | 11 |
+| IN_PROGRESS | 10 |
 | PLANNED | 2 |
-| NOT_STARTED | 59 |
+| NOT_STARTED | 47 |
 | BLOCKED | 0 |
 | **Total** | **105** |
 
@@ -87,7 +87,7 @@ Every requirement in the brief carries a stable ID here. Status meanings are str
 | `DB-007` | Unique + foreign key enforcement verified by tests | Database | `VERIFIED` | DatabaseTests (3 tests) |
 | `DB-008` | Transactional rollback verified by test | Database | `VERIFIED` | DatabaseTests.Failed_transaction_leaves_no_partial_rows |
 | `DB-009` | EF migrations for schema versioning | Database | `PLANNED` | Currently EnsureCreated until first migration |
-| `DB-010` | Full entity schema (sales, purchases, ledgers, accounting, audit, licence) | Database | `NOT_STARTED` | — |
+| `DB-010` | Full entity schema (sales, purchases, ledgers, accounting, audit, licence) | Database | `VERIFIED` | 43 tables configured; exercised by 9 persistence + 7 application tests (CI run on `feat(app)` commit) |
 
 ## Products and catalogue
 
@@ -105,7 +105,7 @@ Every requirement in the brief carries a stable ID here. Status meanings are str
 |---|---|---|---|---|
 | `INV-001` | Stock policy with configurable negative-stock override | Inventory | `VERIFIED` | Inventory/StockPolicy.cs; 4 tests |
 | `INV-002` | Weighted-average valuation with frozen cost | Inventory | `VERIFIED` | Inventory/WeightedAverageCost.cs; 3 tests |
-| `INV-003` | Stock balances and movement ledger | Inventory | `NOT_STARTED` | — |
+| `INV-003` | Stock balances and movement ledger | Inventory | `VERIFIED` | `StockService` writes balance+movement atomically; stock assertions in `SalesWorkflowTests`; **no UI yet** |
 | `INV-004` | Stock adjustments with audit trail | Inventory | `NOT_STARTED` | — |
 | `INV-005` | Low/out-of-stock alerting | Inventory | `NOT_STARTED` | StockLevel classification exists; UI pending |
 
@@ -114,10 +114,10 @@ Every requirement in the brief carries a stable ID here. Status meanings are str
 | ID | Requirement | Module | Status | Evidence |
 |---|---|---|---|---|
 | `POS-001` | POS cart, scanner input, keyboard operation | POS | `NOT_STARTED` | — |
-| `POS-002` | Transactional checkout (single atomic commit) | POS | `NOT_STARTED` | — |
-| `POS-003` | Duplicate-submit protection / idempotency | POS | `NOT_STARTED` | — |
+| `POS-002` | Transactional checkout (single atomic commit) | POS | `IMPLEMENTED` | `SaleService.CreateAsync` — invoice+items+stock+ledger+journal+audit in one transaction; proven by `SalesWorkflowTests`; **POS screen still missing** |
+| `POS-003` | Duplicate-submit protection / idempotency | POS | `VERIFIED` | unique `idempotency_key` + service guard; `Duplicate_idempotency_key_never_creates_a_second_invoice` |
 | `POS-004` | Partial payment, customer due, change | POS | `NOT_STARTED` | Arithmetic ready in SaleCalculator |
-| `POS-005` | Invoice numbering sequences | POS | `NOT_STARTED` | — |
+| `POS-005` | Invoice numbering sequences | POS | `VERIFIED` | `DocumentNumberService` + unique index; sequential/unique assertion in `Every_posted_journal_entry_balances_and_sales_are_numbered_sequentially` |
 
 ## Sales and returns
 
@@ -132,25 +132,25 @@ Every requirement in the brief carries a stable ID here. Status meanings are str
 
 | ID | Requirement | Module | Status | Evidence |
 |---|---|---|---|---|
-| `PUR-001` | Purchase entry with weighted-average recost | Purchases | `NOT_STARTED` | — |
+| `PUR-001` | Purchase entry with weighted-average recost | Purchases | `VERIFIED` | `PurchaseService` + tests (avg cost 72.2222 after mixed receipts); **no purchase screen yet** |
 | `PUR-002` | Purchase payments and supplier dues | Purchases | `NOT_STARTED` | — |
 
 ## Customers, suppliers, expenses
 
 | ID | Requirement | Module | Status | Evidence |
 |---|---|---|---|---|
-| `CRM-001` | Customer CRUD, ledger, due statement, collections | Customers | `NOT_STARTED` | — |
-| `CRM-002` | Supplier CRUD, ledger, due statement, payments | Suppliers | `NOT_STARTED` | — |
+| `CRM-001` | Customer CRUD, ledger, due statement, collections | Customers | `IN_PROGRESS` | entity + append-only ledger + derived balance verified in tests; CRUD UI and payment service pending |
+| `CRM-002` | Supplier CRUD, ledger, due statement, payments | Suppliers | `IN_PROGRESS` | entity + ledger verified through purchase flow; CRUD UI pending |
 | `CRM-003` | Expense categories and expense entry | Expenses | `NOT_STARTED` | — |
 
 ## Accounting
 
 | ID | Requirement | Module | Status | Evidence |
 |---|---|---|---|---|
-| `ACC-001` | Chart of accounts with double-entry journals | Accounting | `NOT_STARTED` | — |
-| `ACC-002` | Automatic posting rules for sale/purchase/payment/return/expense | Accounting | `NOT_STARTED` | — |
+| `ACC-001` | Chart of accounts with double-entry journals | Accounting | `VERIFIED` | 22-account seeded chart; `AccountingService.PostAsync` rejects unbalanced entries; every posted entry asserted balanced in tests |
+| `ACC-002` | Automatic posting rules for sale/purchase/payment/return/expense | Accounting | `IN_PROGRESS` | sale + purchase posting verified in CI; payment/return/expense posting pending |
 | `ACC-003` | Profit & loss, cash flow, trial balance | Accounting | `NOT_STARTED` | — |
-| `ACC-004` | Journal balance enforcement | Accounting | `NOT_STARTED` | Domain codes reserved |
+| `ACC-004` | Journal balance enforcement | Accounting | `VERIFIED` | `DomainErrorCodes.JournalNotBalanced` thrown and asserted; all posted entries balanced in integration tests |
 
 ## Reports and export
 
@@ -177,7 +177,7 @@ Every requirement in the brief carries a stable ID here. Status meanings are str
 | `SEC-001` | Password hashing (PBKDF2-HMAC-SHA256, 210k iterations) | Security | `NOT_STARTED` | — |
 | `SEC-002` | Role-based access control with granular permissions | Security | `NOT_STARTED` | — |
 | `SEC-003` | Authorisation enforced in services, not only UI | Security | `NOT_STARTED` | — |
-| `SEC-004` | Audit log for all sensitive operations | Security | `NOT_STARTED` | — |
+| `SEC-004` | Audit log for all sensitive operations | Security | `IMPLEMENTED` | hash-chained `AuditService`; sale/purchase audited; chain-intact test; UI-based actions pending |
 | `SEC-005` | No secrets in repository or logs | Security | `VERIFIED` | SECURITY.md; .gitignore; logger scrubbing |
 
 ## Licensing

@@ -20,5 +20,15 @@ versioning follows Semantic Versioning.
 - WPF shell with light-mode design tokens, Bangla UI and a real, database-backed readiness page.
 - CI pipeline on Windows: restore, build, test, self-contained publish, executable smoke launch.
 
+### Added — services and schema (still 0.1.0)
+- Full relational schema: 43 tables across parties, sales, purchases, inventory, accounting, security
+  and licensing, with `RESTRICT` referential policy and unique document/idempotency keys.
+- `SaleService`: one atomic transaction for invoice, items, stock issue at frozen cost, payment,
+  customer ledger, balanced journal entry and hash-chained audit record.
+- `PurchaseService`: atomic purchase with weighted-average recost, supplier ledger and journal.
+- `StockService`, `LedgerService`, `AccountingService` (22-account chart), `DocumentNumberService`
+  (gap-free, unique-by-index numbering), `AuditService` (tamper-evident hash chain).
+- 7 integration tests covering sales lifecycle, dues, idempotency, stock rejection and frozen COGS.
+
 ### Security
 - No secrets, keys or customer data are committed; `.gitignore` blocks databases, logs, licences and keys.
