@@ -43,14 +43,9 @@ public sealed class DatabaseTests
     {
         await using var db = await DatabaseTestContext.CreateAsync();
 
-        var journalMode = await db.Context.Database.SqlQueryRaw<string>("PRAGMA journal_mode;").SingleAsync();
-        journalMode.Should().Be("wal");
-
-        var foreignKeys = await db.Context.Database.SqlQueryRaw<long>("PRAGMA foreign_keys;").SingleAsync();
-        foreignKeys.Should().Be(1);
-
-        var synchronous = await db.Context.Database.SqlQueryRaw<long>("PRAGMA synchronous;").SingleAsync();
-        synchronous.Should().Be(2); // FULL
+        (await SqliteDiagnostics.JournalModeAsync(db.Context)).Should().Be("wal");
+        (await SqliteDiagnostics.ForeignKeysAsync(db.Context)).Should().Be(1);
+        (await SqliteDiagnostics.SynchronousAsync(db.Context)).Should().Be(2); // FULL
     }
 
     [Fact]
@@ -79,9 +74,7 @@ public sealed class DatabaseTests
         loaded.WholesalePrice.Should().Be(999999.99m);
         loaded.MinimumStock.Should().Be(2.5m);
 
-        var storageType = await verify.Database
-            .SqlQueryRaw<string>("SELECT typeof(purchase_price) FROM products WHERE code = 'RICE-5KG';")
-            .SingleAsync();
+        var storageType = await SqliteDiagnostics.StorageClassAsync(verify, "products", "purchase_price", "code = 'RICE-5KG'");
         storageType.Should().Be("integer");
     }
 

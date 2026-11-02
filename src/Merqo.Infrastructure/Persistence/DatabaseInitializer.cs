@@ -47,14 +47,8 @@ public sealed class DatabaseInitializer
         return new DatabaseInitializationResult(!existedBefore, seededUnits, integrityOk, messages);
     }
 
-    public static async Task<bool> CheckIntegrityAsync(TahabilDbContext context, CancellationToken cancellationToken = default)
-    {
-        var result = await context.Database
-            .SqlQueryRaw<string>("PRAGMA integrity_check;")
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
-        return result.Count == 1 && string.Equals(result[0], "ok", StringComparison.OrdinalIgnoreCase);
-    }
+    public static Task<bool> CheckIntegrityAsync(TahabilDbContext context, CancellationToken cancellationToken = default)
+        => SqliteDiagnostics.IntegrityOkAsync(context, cancellationToken);
 
     private static async Task<bool> SeedBusinessSettingsAsync(TahabilDbContext context, CancellationToken cancellationToken)
     {
