@@ -26,6 +26,18 @@ public sealed class MigrationTests
         return Convert.ToInt32(await command.ExecuteScalarAsync());
     }
 
+    private static async Task<IReadOnlyList<string>> ListApplicationTablesAsync(string databasePath)
+    {
+        await using var connection = new SqliteConnection(TahabilDbContextFactory.BuildConnectionString(databasePath));
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name <> '__EFMigrationsHistory' ORDER BY name;";
+        var names = new List<string>();
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync()) names.Add(reader.GetString(0));
+        return names;
+    }
+
     [Fact]
     public async Task Fresh_database_is_created_by_the_initial_migration()
     {
@@ -79,14 +91,15 @@ public sealed class MigrationTests
     public async Task Rollback_to_zero_and_forward_again_is_a_supported_recovery_path()
     {
         var paths = new AppPaths(NewRoot());
-        await new DatabaseMigrator(paths).MigrateAsync();
+        await new DatabaseInitializer(paths).InitializeAsync();
         var tableCountBefore = await CountApplicationTablesAsync(paths.DatabasePath);
         tableCountBefore.Should().BeGreaterThan(40);
 
         var runner = new EfMigrationRunner(paths.DatabasePath);
         await runner.MigrateToAsync("0");
 
-        (await CountApplicationTablesAsync(paths.DatabasePath)).Should().Be(0, "the documented down-migration removes the schema");
+        var remaining = await ListApplicationTablesAsync(paths.DatabasePath);
+        remaining.Should().BeEmpty("the documented down-migration removes every application table, but these remained: " + string.Join(", ", remaining));
         (await runner.GetAppliedMigrationsAsync()).Should().BeEmpty();
 
         var forward = await new DatabaseMigrator(paths).MigrateAsync();
@@ -95,6 +108,7 @@ public sealed class MigrationTests
         (await CountApplicationTablesAsync(paths.DatabasePath)).Should().Be(tableCountBefore);
 
         // The re-created schema is fully usable.
+        await new DatabaseInitializer(paths).InitializeAsync();
         await using var context = TahabilDbContextFactory.Create(paths.DatabasePath);
         var unit = await context.Units.FirstAsync(u => u.NameEn == "Piece");
         context.Products.Add(new Product { NameBn = "পরীক্ষা", Code = "MIG-1", UnitId = unit.Id });
@@ -124,7 +138,7 @@ public sealed class MigrationTests
     public async Task Failed_migration_restores_the_previous_database_intact()
     {
         var paths = new AppPaths(NewRoot());
-        await new DatabaseMigrator(paths).MigrateAsync();
+        await new DatabaseInitializer(paths).InitializeAsync();
 
         await using (var seed = TahabilDbContextFactory.Create(paths.DatabasePath))
         {
@@ -172,7 +186,7 @@ public sealed class MigrationTests
     public async Task Restore_replaces_the_database_with_the_backup_content()
     {
         var paths = new AppPaths(NewRoot());
-        await new DatabaseMigrator(paths).MigrateAsync();
+        await new DatabaseInitializer(paths).InitializeAsync();
 
         var service = new SqliteBackupService();
         await using var context = TahabilDbContextFactory.Create(paths.DatabasePath);
