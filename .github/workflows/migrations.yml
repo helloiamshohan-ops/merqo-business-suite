@@ -40,12 +40,26 @@ jobs:
 
       - name: Add migration
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MIGRATION_NAME: ${{ inputs.name }}
         run: |
-          dotnet ef migrations add "${{ inputs.name || 'InitialCreate' }}" `
+          if ([string]::IsNullOrWhiteSpace($env:MIGRATION_NAME)) { $env:MIGRATION_NAME = 'InitialCreate' }
+          Write-Host "tool: $(dotnet ef --version)"
+          dotnet ef migrations add $env:MIGRATION_NAME `
             --project src/Merqo.Infrastructure/Merqo.Infrastructure.csproj `
             --startup-project src/Merqo.Infrastructure/Merqo.Infrastructure.csproj `
             --output-dir Persistence/Migrations `
-            --namespace Merqo.Infrastructure.Persistence.Migrations
+            --namespace Merqo.Infrastructure.Persistence.Migrations *>&1 | Tee-Object -FilePath ef.log
+          $code = $LASTEXITCODE
+          Write-Host "ef_exit=$code"
+          if ($code -ne 0) {
+            $body = "migration generation **FAILED** for ``$env:MIGRATION_NAME```n``````n" + (Get-Content ef.log -Raw) + "``````"
+            if ($body.Length -gt 60000) { $body = $body.Substring($body.Length - 59000) }
+            Set-Content -Path ef-diagnostics.md -Value $body -Encoding utf8
+            gh issue comment 1 --body-file ef-diagnostics.md --repo "${{ github.repository }}"
+            exit $code
+          }
 
       - name: Commit generated migration back to this branch
         shell: pwsh
