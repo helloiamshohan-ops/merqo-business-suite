@@ -25,58 +25,62 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
 
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
 
       - name: Install dotnet-ef
-        shell: pwsh
+        shell: bash
         run: |
-          dotnet tool install --global dotnet-ef --version 10.0.14
-          "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          set -o pipefail
+          dotnet tool install --global dotnet-ef --version 10.0.14 2>&1 | tee ef-install.log
+          echo "$USERPROFILE/.dotnet/tools" >> "$GITHUB_PATH"
 
       - name: Add migration
-        shell: pwsh
+        shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MIGRATION_NAME: ${{ inputs.name }}
         run: |
-          if ([string]::IsNullOrWhiteSpace($env:MIGRATION_NAME)) { $env:MIGRATION_NAME = 'InitialCreate' }
-          Write-Host "tool: $(dotnet ef --version)"
-          dotnet ef migrations add $env:MIGRATION_NAME `
-            --project src/Merqo.Infrastructure/Merqo.Infrastructure.csproj `
-            --startup-project src/Merqo.Infrastructure/Merqo.Infrastructure.csproj `
-            --output-dir Persistence/Migrations `
-            --namespace Merqo.Infrastructure.Persistence.Migrations *>&1 | Tee-Object -FilePath ef.log
-          $code = $LASTEXITCODE
-          Write-Host "ef_exit=$code"
-          if ($code -ne 0) {
-            $fence = '```'
-            $nl = [Environment]::NewLine
-            $body = 'migration generation FAILED for ' + $env:MIGRATION_NAME + $nl + $fence + $nl + (Get-Content ef.log -Raw) + $nl + $fence
-            if ($body.Length -gt 60000) { $body = $body.Substring($body.Length - 59000) }
-            Set-Content -Path ef-diagnostics.md -Value $body -Encoding utf8
-            gh issue comment 1 --body-file ef-diagnostics.md --repo "${{ github.repository }}"
-            exit $code
-          }
+          set -o pipefail
+          name="${MIGRATION_NAME:-InitialCreate}"
+          echo "generating migration: $name"
+          dotnet ef migrations add "$name" \
+            --project src/Merqo.Infrastructure/Merqo.Infrastructure.csproj \
+            --startup-project src/Merqo.Infrastructure/Merqo.Infrastructure.csproj \
+            --output-dir Persistence/Migrations \
+            --namespace Merqo.Infrastructure.Persistence.Migrations 2>&1 | tee ef.log
+          status=${PIPESTATUS[0]}
+          echo "ef_exit=$status"
+          if [ "$status" -ne 0 ]; then
+            {
+              echo "migration generation FAILED for $name"
+              echo '```'
+              tail -c 50000 ef.log
+              echo '```'
+            } > ef-diagnostics.md
+            gh issue comment 1 --body-file ef-diagnostics.md --repo "$GITHUB_REPOSITORY"
+            exit "$status"
+          fi
 
       - name: Commit generated migration back to this branch
-        shell: pwsh
+        shell: bash
         run: |
           git config user.name "MERQO migration bot"
           git config user.email "merqoonline@gmail.com"
           git add src/Merqo.Infrastructure/Persistence/Migrations
-          git commit -m "build(db): generate EF Core migration ${{ inputs.name }}"
+          if git diff --cached --quiet; then
+            echo "no migration files produced"
+            exit 0
+          fi
+          git commit -m "build(db): generate EF Core migration"
           git push origin "HEAD:${{ github.ref_name }}"
 
       - name: Report
         if: always()
-        shell: pwsh
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $status = '${{ job.status }}'
-          gh issue comment 1 --repo "${{ github.repository }}" --body "migration generation: **$status** (name: ${{ inputs.name }})"
+          echo "migration generation: ${{ job.status }}" > report.md
+          gh issue comment 1 --body-file report.md --repo "$GITHUB_REPOSITORY"
