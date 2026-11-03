@@ -55,6 +55,10 @@ public enum StockAdjustmentType
 public sealed class StockAdjustment : Entity
 {
     public string AdjustmentNumber { get; set; } = string.Empty;
+    public string? IdempotencyKey { get; set; }
+    public bool IsVoided { get; set; }
+    public DateTime? VoidedAtUtc { get; set; }
+    public string? VoidReason { get; set; }
     public DateTime AdjustmentDateUtc { get; set; } = DateTime.UtcNow;
     public StockAdjustmentType AdjustmentType { get; set; }
     public string Reason { get; set; } = string.Empty;

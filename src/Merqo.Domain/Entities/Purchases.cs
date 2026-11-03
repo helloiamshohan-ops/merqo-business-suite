@@ -27,6 +27,7 @@ public sealed class Purchase : Entity
     public string? Note { get; set; }
     public string IdempotencyKey { get; set; } = string.Empty;
     public Guid? CreatedByUserId { get; set; }
+    public Guid? VoidedByUserId { get; set; }
     public DateTime? VoidedAtUtc { get; set; }
     public string? VoidReason { get; set; }
 
@@ -61,12 +62,21 @@ public sealed class PurchasePayment : Entity
     public decimal Amount { get; set; }
     public DateTime PaidAtUtc { get; set; } = DateTime.UtcNow;
     public string? Reference { get; set; }
+    public string? IdempotencyKey { get; set; }
     public Guid? CreatedByUserId { get; set; }
+    public bool IsReversed { get; set; }
+    public DateTime? ReversedAtUtc { get; set; }
+    public Guid? ReversedByUserId { get; set; }
+    public string? ReversalReason { get; set; }
 }
 
 public sealed class PurchaseReturn : Entity
 {
     public string ReturnNumber { get; set; } = string.Empty;
+    public string? IdempotencyKey { get; set; }
+    public bool IsVoided { get; set; }
+    public DateTime? VoidedAtUtc { get; set; }
+    public string? VoidReason { get; set; }
     public Guid PurchaseId { get; set; }
     public Purchase? Purchase { get; set; }
     public DateTime ReturnDateUtc { get; set; } = DateTime.UtcNow;

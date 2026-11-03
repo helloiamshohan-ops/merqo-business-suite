@@ -78,12 +78,23 @@ public sealed class SalePayment : Entity
     public decimal Amount { get; set; }
     public DateTime PaidAtUtc { get; set; } = DateTime.UtcNow;
     public string? Reference { get; set; }
+    public string? IdempotencyKey { get; set; }
     public Guid? CreatedByUserId { get; set; }
+
+    // Reversal is a state change on the existing row; the row itself is never deleted.
+    public bool IsReversed { get; set; }
+    public DateTime? ReversedAtUtc { get; set; }
+    public Guid? ReversedByUserId { get; set; }
+    public string? ReversalReason { get; set; }
 }
 
 public sealed class SaleReturn : Entity
 {
     public string ReturnNumber { get; set; } = string.Empty;
+    public string? IdempotencyKey { get; set; }
+    public bool IsVoided { get; set; }
+    public DateTime? VoidedAtUtc { get; set; }
+    public string? VoidReason { get; set; }
     public Guid SaleId { get; set; }
     public Sale? Sale { get; set; }
     public DateTime ReturnDateUtc { get; set; } = DateTime.UtcNow;

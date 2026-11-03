@@ -89,6 +89,7 @@ public sealed class Expense : Entity
     public string? Description { get; set; }
     public string? Reference { get; set; }
     public string? AttachmentPath { get; set; }
+    public string? IdempotencyKey { get; set; }
     public bool IsVoided { get; set; }
     public DateTime? VoidedAtUtc { get; set; }
     public string? VoidReason { get; set; }

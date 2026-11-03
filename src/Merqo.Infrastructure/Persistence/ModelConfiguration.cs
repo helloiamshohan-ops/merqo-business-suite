@@ -76,6 +76,32 @@ public static class ModelConfiguration
             e.HasIndex(x => x.ReferenceId);
         });
 
+        modelBuilder.Entity<CustomerPayment>(e =>
+        {
+            e.ToTable("customer_payments");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.ReceiptNumber).IsRequired().HasMaxLength(60);
+            e.Property(x => x.MethodNameSnapshot).IsRequired().HasMaxLength(80);
+            e.Property(x => x.IdempotencyKey).IsRequired().HasMaxLength(80);
+            e.HasIndex(x => x.ReceiptNumber).IsUnique();
+            e.HasIndex(x => x.IdempotencyKey).IsUnique();
+            e.HasIndex(x => new { x.CustomerId, x.PaidAtUtc });
+            e.HasOne(x => x.Customer).WithMany().HasForeignKey(x => x.CustomerId);
+        });
+
+        modelBuilder.Entity<SupplierPayment>(e =>
+        {
+            e.ToTable("supplier_payments");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.VoucherNumber).IsRequired().HasMaxLength(60);
+            e.Property(x => x.MethodNameSnapshot).IsRequired().HasMaxLength(80);
+            e.Property(x => x.IdempotencyKey).IsRequired().HasMaxLength(80);
+            e.HasIndex(x => x.VoucherNumber).IsUnique();
+            e.HasIndex(x => x.IdempotencyKey).IsUnique();
+            e.HasIndex(x => new { x.SupplierId, x.PaidAtUtc });
+            e.HasOne(x => x.Supplier).WithMany().HasForeignKey(x => x.SupplierId);
+        });
+
         modelBuilder.Entity<PaymentMethod>(e =>
         {
             e.ToTable("payment_methods");
@@ -120,6 +146,7 @@ public static class ModelConfiguration
             e.Property(x => x.MethodNameSnapshot).IsRequired().HasMaxLength(80);
             e.HasOne(x => x.Sale).WithMany(s => s.Payments).HasForeignKey(x => x.SaleId);
             e.HasIndex(x => x.SaleId);
+            e.HasIndex(x => x.IdempotencyKey).IsUnique();
         });
 
         modelBuilder.Entity<SaleReturn>(e =>
@@ -128,6 +155,7 @@ public static class ModelConfiguration
             e.HasKey(x => x.Id);
             e.Property(x => x.ReturnNumber).IsRequired().HasMaxLength(60);
             e.HasIndex(x => x.ReturnNumber).IsUnique();
+            e.HasIndex(x => x.IdempotencyKey).IsUnique();
             e.HasOne(x => x.Sale).WithMany(s => s.Returns).HasForeignKey(x => x.SaleId);
             e.HasIndex(x => x.ReturnDateUtc);
         });
@@ -175,6 +203,7 @@ public static class ModelConfiguration
             e.Property(x => x.MethodNameSnapshot).IsRequired().HasMaxLength(80);
             e.HasOne(x => x.Purchase).WithMany(p => p.Payments).HasForeignKey(x => x.PurchaseId);
             e.HasIndex(x => x.PurchaseId);
+            e.HasIndex(x => x.IdempotencyKey).IsUnique();
         });
 
         modelBuilder.Entity<PurchaseReturn>(e =>
@@ -183,6 +212,7 @@ public static class ModelConfiguration
             e.HasKey(x => x.Id);
             e.Property(x => x.ReturnNumber).IsRequired().HasMaxLength(60);
             e.HasIndex(x => x.ReturnNumber).IsUnique();
+            e.HasIndex(x => x.IdempotencyKey).IsUnique();
             e.HasOne(x => x.Purchase).WithMany().HasForeignKey(x => x.PurchaseId);
         });
 
@@ -224,6 +254,7 @@ public static class ModelConfiguration
             e.Property(x => x.AdjustmentNumber).IsRequired().HasMaxLength(60);
             e.Property(x => x.Reason).IsRequired().HasMaxLength(500);
             e.HasIndex(x => x.AdjustmentNumber).IsUnique();
+            e.HasIndex(x => x.IdempotencyKey).IsUnique();
             e.HasIndex(x => x.AdjustmentDateUtc);
         });
 
@@ -285,6 +316,7 @@ public static class ModelConfiguration
             e.HasKey(x => x.Id);
             e.Property(x => x.ExpenseNumber).IsRequired().HasMaxLength(60);
             e.HasIndex(x => x.ExpenseNumber).IsUnique();
+            e.HasIndex(x => x.IdempotencyKey).IsUnique();
             e.HasIndex(x => x.ExpenseDateUtc);
             e.HasOne(x => x.ExpenseCategory).WithMany().HasForeignKey(x => x.ExpenseCategoryId);
         });
