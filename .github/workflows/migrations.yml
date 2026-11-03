@@ -37,6 +37,10 @@ jobs:
           dotnet tool install --global dotnet-ef --version 10.0.14 2>&1 | tee ef-install.log
           echo "$USERPROFILE/.dotnet/tools" >> "$GITHUB_PATH"
 
+      - name: Restore
+        shell: bash
+        run: dotnet restore Merqo.slnx
+
       - name: Add migration
         shell: bash
         env:
