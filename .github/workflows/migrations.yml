@@ -41,6 +41,7 @@ jobs:
         shell: bash
         env:
           MIGRATION_NAME: ${{ inputs.name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -o pipefail
           name="${MIGRATION_NAME:-InitialCreate}"
@@ -59,7 +60,7 @@ jobs:
               tail -c 50000 ef.log
               echo '```'
             } > ef-diagnostics.md
-            gh issue comment 1 --body-file ef-diagnostics.md --repo "$GITHUB_REPOSITORY"
+            gh issue comment 1 --body-file ef-diagnostics.md --repo "$GITHUB_REPOSITORY" || true
             exit "$status"
           fi
 
@@ -82,5 +83,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "migration generation: ${{ job.status }}" > report.md
-          gh issue comment 1 --body-file report.md --repo "$GITHUB_REPOSITORY"
+          {
+            echo "migration generation: ${{ job.status }}"
+            if [ -f ef.log ]; then
+              echo '```'
+              tail -c 40000 ef.log
+              echo '```'
+            fi
+          } > report.md
+          gh issue comment 1 --body-file report.md --repo "$GITHUB_REPOSITORY" || true
