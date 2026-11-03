@@ -1,5 +1,6 @@
 using Merqo.Domain.Accounting;
 using Merqo.Domain.Entities;
+using Merqo.Infrastructure.Logging;
 using Microsoft.EntityFrameworkCore;
 
 namespace Merqo.Infrastructure.Persistence;
@@ -13,26 +14,26 @@ public sealed record DatabaseInitializationResult(bool Created, bool SeededUnits
 public sealed class DatabaseInitializer
 {
     private readonly AppPaths _paths;
+    private readonly IAppLogger? _logger;
 
-    public DatabaseInitializer(AppPaths paths) => _paths = paths;
+    public DatabaseInitializer(AppPaths paths, IAppLogger? logger = null)
+    {
+        _paths = paths;
+        _logger = logger;
+    }
 
     public async Task<DatabaseInitializationResult> InitializeAsync(CancellationToken cancellationToken = default)
     {
         _paths.EnsureCreated();
         var existedBefore = File.Exists(_paths.DatabasePath);
 
-        await using var context = TahabilDbContextFactory.Create(_paths.DatabasePath);
+        // Schema is owned exclusively by EF Core migrations, applied through the safe migration workflow
+        // (verified pre-migration backup + automatic restore on failure). EnsureCreated is never used,
+        // because a database created that way has no migration history and cannot be upgraded.
+        var migration = await new DatabaseMigrator(_paths, _logger).MigrateAsync(cancellationToken).ConfigureAwait(false);
+        _ = migration; // report is logged by the migrator; seeding follows below
 
-        // Once EF migrations are committed the schema is upgraded in place; before the first migration
-        // exists the schema is created directly so that development builds stay runnable.
-        if (context.Database.GetMigrations().Any())
-        {
-            await context.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
-        }
-        else
-        {
-            await context.Database.EnsureCreatedAsync(cancellationToken).ConfigureAwait(false);
-        }
+        await using var context = TahabilDbContextFactory.Create(_paths.DatabasePath);
 
         var seededUnits = await SeedUnitsAsync(context, cancellationToken).ConfigureAwait(false);
         await SeedBusinessSettingsAsync(context, cancellationToken).ConfigureAwait(false);
