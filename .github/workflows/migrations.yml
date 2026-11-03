@@ -54,7 +54,9 @@ jobs:
           $code = $LASTEXITCODE
           Write-Host "ef_exit=$code"
           if ($code -ne 0) {
-            $body = "migration generation **FAILED** for ``$env:MIGRATION_NAME```n``````n" + (Get-Content ef.log -Raw) + "``````"
+            $fence = '```'
+            $nl = [Environment]::NewLine
+            $body = 'migration generation FAILED for ' + $env:MIGRATION_NAME + $nl + $fence + $nl + (Get-Content ef.log -Raw) + $nl + $fence
             if ($body.Length -gt 60000) { $body = $body.Substring($body.Length - 59000) }
             Set-Content -Path ef-diagnostics.md -Value $body -Encoding utf8
             gh issue comment 1 --body-file ef-diagnostics.md --repo "${{ github.repository }}"
