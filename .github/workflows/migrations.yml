@@ -7,6 +7,13 @@ on:
         description: 'Migration name'
         default: 'InitialCreate'
         type: string
+  # Self-registering trigger: editing this file runs the generator once. The bot's own commit only
+  # touches Persistence/Migrations, so it cannot re-trigger itself.
+  push:
+    paths:
+      - '.github/workflows/migrations.yml'
+    branches:
+      - 'arena/**'
 
 permissions:
   contents: write
@@ -34,7 +41,7 @@ jobs:
       - name: Add migration
         shell: pwsh
         run: |
-          dotnet ef migrations add "${{ inputs.name }}" `
+          dotnet ef migrations add "${{ inputs.name || 'InitialCreate' }}" `
             --project src/Merqo.Infrastructure/Merqo.Infrastructure.csproj `
             --startup-project src/Merqo.Infrastructure/Merqo.Infrastructure.csproj `
             --output-dir Persistence/Migrations `
